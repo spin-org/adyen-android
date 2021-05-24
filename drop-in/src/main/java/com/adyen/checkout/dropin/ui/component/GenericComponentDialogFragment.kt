@@ -47,7 +47,7 @@ class GenericComponentDialogFragment : BaseComponentDialogFragment() {
 
         if (!dropInConfiguration.amount.isEmpty) {
             val value = CurrencyUtils.formatAmount(dropInConfiguration.amount, dropInConfiguration.shopperLocale)
-            payButton.text = String.format(resources.getString(R.string.pay_button_with_value), value)
+            payButton.text = resources.getString(R.string.pay_button_add_card)
         }
 
         try {

@@ -8,7 +8,6 @@
 
 <resources>
     <string name="pay_button">결제</string>
-    <string name="pay_button_with_value">%s 결제</string>
     <string name="payment_methods_header">결제 수단</string>
     <string name="error_dialog_title">오류</string>
     <string name="error_dialog_button">확인</string>

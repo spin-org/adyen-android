@@ -55,7 +55,7 @@ class CardComponentDialogFragment : BaseComponentDialogFragment() {
 
         if (!dropInConfiguration.amount.isEmpty) {
             val value = CurrencyUtils.formatAmount(dropInConfiguration.amount, dropInConfiguration.shopperLocale)
-            dropInCardView.payButton.text = String.format(resources.getString(R.string.pay_button_with_value), value)
+            dropInCardView.payButton.text = resources.getString(R.string.pay_button_add_card)
         }
 
         // Keeping generic component to use the observer from the BaseComponentDialogFragment

@@ -8,7 +8,6 @@
 
 <resources>
     <string name="pay_button">Pay</string>
-    <string name="pay_button_with_value">Pay %s</string>
     <string name="payment_methods_header">Payment Methods</string>
     <string name="error_dialog_title">Error</string>
     <string name="error_dialog_button">OK</string>
@@ -21,4 +20,5 @@
     <string name="continue_button">Continue</string>
     <string name="change_payment_method">Change Payment Method</string>
     <string name="credit_card">Credit Card</string>
+    <string name="pay_button_add_card" translatable="false">Add Card</string>
 </resources>

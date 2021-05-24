@@ -8,7 +8,6 @@
 
 <resources>
     <string name="pay_button">Betal</string>
-    <string name="pay_button_with_value">Betal %s</string>
     <string name="payment_methods_header">Betalingsmetoder</string>
     <string name="error_dialog_title">Feil</string>
     <string name="error_dialog_button">Ok</string>
