@@ -11,6 +11,7 @@ package com.adyen.checkout.dropin.ui.component
 import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
 import android.support.design.widget.BottomSheetBehavior
+import android.support.v7.widget.SwitchCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +29,7 @@ import com.adyen.checkout.dropin.ui.base.BaseComponentDialogFragment
 import kotlinx.android.synthetic.main.fragment_card_component.dropInCardView
 import kotlinx.android.synthetic.main.view_card_component_dropin.view.header
 import kotlinx.android.synthetic.main.view_card_component_dropin.view.payButton
+import kotlinx.android.synthetic.main.view_card_component_dropin.view.cardView
 
 class CardComponentDialogFragment : BaseComponentDialogFragment() {
 
@@ -84,9 +86,25 @@ class CardComponentDialogFragment : BaseComponentDialogFragment() {
         } else {
             dropInCardView.payButton.visibility = View.GONE
         }
+
+        bindAddCardButtonWithAuthorizeSwitch()
     }
 
     override fun onChanged(paymentComponentState: PaymentComponentState<in PaymentMethodDetails>?) {
         // nothing, validation is already checked on focus change and button click
+    }
+
+    private fun bindAddCardButtonWithAuthorizeSwitch() {
+        val switchCompat = dropInCardView
+            .cardView
+            .findViewById<SwitchCompat>(R.id.switch_storePaymentMethod)
+
+        // PM @Rana M said its important that the toggle is in the ON position by default
+        switchCompat.isChecked = true
+
+        dropInCardView.payButton.isEnabled = switchCompat.isChecked
+        switchCompat?.setOnCheckedChangeListener { _, isChecked ->
+            dropInCardView.payButton.isEnabled = isChecked
+        }
     }
 }
