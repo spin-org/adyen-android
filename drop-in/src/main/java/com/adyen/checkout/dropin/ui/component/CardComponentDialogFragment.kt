@@ -99,7 +99,8 @@ class CardComponentDialogFragment : BaseComponentDialogFragment() {
             .cardView
             .findViewById<SwitchCompat>(R.id.switch_storePaymentMethod)
 
-        // PM @Rana M said its important that the toggle is in the ON position by default
+        // PM said its important that the toggle is in the ON position by default.
+        // No references to a requirement document yet.
         switchCompat.isChecked = true
 
         dropInCardView.payButton.isEnabled = switchCompat.isChecked
