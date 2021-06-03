@@ -220,3 +220,12 @@ This repository is open source and available under the MIT license. For more inf
 [docs.cardConfiguration]: https://docs.adyen.com/online-payments/android/components#step-1-set-up-components
 [client.key]: https://docs.adyen.com/online-payments/android/drop-in#client-key
 [migration.guide]: https://docs.adyen.com/online-payments/android/migrate-to-android-4-0-0
+
+# Publish artifactory to JFrog
+```
+ ./gradlew clean :drop-in:artifactoryPublish -Pcurrent_version='<VERSION>' -Partifactory_user='<USER>' -Partifactory_password='<PASSWORD>'
+```
+
+_NOTE:_ Use single quotes for parameters.
+
+Check the new version at https://spin.jfrog.io/artifactory/default-maven-local/com/adyen/checkout/spin-drop-in
