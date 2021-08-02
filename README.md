@@ -152,8 +152,9 @@ This repository is open source and available under the MIT license. For more inf
 
 
 # Publish artifactory to JFrog
+# When publishing to JFrog, use the X.X.X-spin version convention for releases. For Test versions, let's try to use a X.999.X-spin convention so we can be as close as possible to the Adyen versioning.
 ```
- ./gradlew clean :drop-in:artifactoryPublish -Partifactory_user='<USER>' -Partifactory_password='<PASSWORD>'
+ ./gradlew clean artifactoryPublish -Pcurrent_version='<VERSION>' -Partifactory_user='<USER>' -Partifactory_password='<PASSWORD>'
 ```
 
 _NOTE:_ Use single quotes for parameters.
