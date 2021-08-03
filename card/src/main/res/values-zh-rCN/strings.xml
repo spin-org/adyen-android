@@ -28,4 +28,7 @@
     <string name="checkout_card_postal_not_valid">输入格式无效。</string>
 
     <string name="store_payment_method">保存以便下次支付使用</string>
+
+    <string name="spin_auth_terms">本人授权 Spin 根据本人同意的Spin 条款，通过本人卡片的发卡金融机构接收付款。</string>
+    <string name="spin_terms">Spin 条款</string>
 </resources>
