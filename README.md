@@ -149,3 +149,14 @@ This repository is open source and available under the MIT license. For more inf
 [apiExplorer.paymentMethods]: https://docs.adyen.com/api-explorer/#/PaymentSetupAndVerificationService/v46/paymentMethods
 [apiExplorer.payments]: https://docs.adyen.com/api-explorer/#/PaymentSetupAndVerificationService/v46/payments
 [apiExplorer.paymentsDetails]: https://docs.adyen.com/api-explorer/#/PaymentSetupAndVerificationService/v46/paymentsDetails
+
+
+# Publish artifactory to JFrog
+# When publishing to JFrog, use the X.X.X-spin version convention for releases. For Test versions, let's try to use a X.999.X-spin convention so we can be as close as possible to the Adyen versioning.
+```
+ ./gradlew clean artifactoryPublish -Pcurrent_version='<VERSION>' -Partifactory_user='<USER>' -Partifactory_password='<PASSWORD>'
+```
+
+_NOTE:_ Use single quotes for parameters.
+
+Check the new version at https://spin.jfrog.io/artifactory/default-maven-local/com/adyen/checkout/spin-drop-in
