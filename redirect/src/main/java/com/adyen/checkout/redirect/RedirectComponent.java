@@ -14,14 +14,16 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
-import com.adyen.checkout.base.ActionComponentProvider;
-import com.adyen.checkout.base.component.ActionComponentProviderImpl;
-import com.adyen.checkout.base.component.BaseActionComponent;
-import com.adyen.checkout.base.model.payments.response.Action;
-import com.adyen.checkout.base.model.payments.response.RedirectAction;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.adyen.checkout.components.ActionComponentProvider;
+import com.adyen.checkout.components.base.ActionComponentProviderImpl;
+import com.adyen.checkout.components.base.BaseActionComponent;
+import com.adyen.checkout.components.model.payments.response.Action;
+import com.adyen.checkout.components.model.payments.response.RedirectAction;
 import com.adyen.checkout.core.exception.CheckoutException;
 import com.adyen.checkout.core.exception.ComponentException;
 import com.adyen.checkout.core.log.LogUtil;
@@ -34,14 +36,14 @@ import java.util.Collections;
 import java.util.List;
 
 
-public final class RedirectComponent extends BaseActionComponent {
+public final class RedirectComponent extends BaseActionComponent<RedirectConfiguration> {
     private static final String TAG = LogUtil.getTag();
 
-    public static final ActionComponentProvider<RedirectComponent> PROVIDER =
-            new ActionComponentProviderImpl<>(RedirectComponent.class);
+    public static final ActionComponentProvider<RedirectComponent, RedirectConfiguration> PROVIDER =
+            new ActionComponentProviderImpl<>(RedirectComponent.class, RedirectConfiguration.class);
 
-    public RedirectComponent(@NonNull Application application) {
-        super(application);
+    public RedirectComponent(@NonNull Application application, @NonNull RedirectConfiguration configuration) {
+        super(application, configuration);
     }
 
     /**
@@ -81,6 +83,12 @@ public final class RedirectComponent extends BaseActionComponent {
     protected List<String> getSupportedActionTypes() {
         final String[] supportedCodes = {RedirectAction.ACTION_TYPE};
         return Collections.unmodifiableList(Arrays.asList(supportedCodes));
+    }
+
+    @Nullable
+    @Override
+    protected List<String> getSupportedPaymentMethodTypes() {
+        return null;
     }
 
     @Override

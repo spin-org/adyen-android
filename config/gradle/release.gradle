@@ -5,16 +5,36 @@
  *
  * Created by ran on 6/2/2019.
  */
-
-import groovy.json.JsonSlurper
-
 apply plugin: "maven-publish"
-apply plugin: "com.jfrog.bintray"
+apply plugin: "signing"
 apply plugin: "com.jfrog.artifactory"
 
 apply from: "../config/gradle/artifacts.gradle"
 
-// TODO: 03/01/2019 add support for signing of artifacts.
+ext["signing.keyId"] = ''
+ext["signing.password"] = ''
+ext["signing.secretKeyRingFile"] = ''
+ext["ossrhUsername"] = ''
+ext["ossrhPassword"] = ''
+ext["sonatypeStagingProfileId"] = ''
+
+File secretPropsFile = project.rootProject.file('local.properties')
+if (secretPropsFile.exists()) {
+    logger.lifecycle("\n-- Getting Secrets from local.properties --\n")
+    Properties p = new Properties()
+    p.load(new FileInputStream(secretPropsFile))
+    p.each { name, value ->
+        ext[name] = value
+    }
+} else {
+    logger.lifecycle("\n-- Getting Secrets from System Env --\n")
+    ext["signing.keyId"] = System.getenv('SIGNING_KEY_ID')
+    ext["signing.password"] = System.getenv('SIGNING_PASSWORD')
+    ext["signing.secretKeyRingFile"] = System.getenv('SIGNING_SECRET_KEY_RING_FILE')
+    ext["ossrhUsername"] = System.getenv('OSSRH_USERNAME')
+    ext["ossrhPassword"] = System.getenv('OSSRH_PASSWORD')
+    ext["sonatypeStagingProfileId"] = System.getenv('SONATYPE_STAGING_PROFILE_ID')
+}
 
 final theGroupId = "com.adyen.checkout"
 final theArtifactId = project.mavenArtifactId
@@ -30,19 +50,21 @@ final theLicenseUrl = "https://opensource.org/licenses/MIT"
 final theOrganizationName = "Adyen N.V."
 final theOrganizationUrl = "https://www.adyen.com/"
 
+final theTeamName = "Checkout"
+
 final theScmConnection = "scm:git:git://github.com/Adyen/adyen-android.git"
 final theScmUrl = "https://github.com/Adyen/adyen-android"
 
 project.afterEvaluate {
     publishing {
         publications {
-            bintrayMavenPublication(MavenPublication) {
+            release(MavenPublication) {
                 groupId theGroupId
                 artifactId theArtifactId
                 version theVersion
 
-                artifact androidJavadocsJar
                 artifact androidSourcesJar
+                artifact javadocJar
                 artifact bundleReleaseAar
 
                 pom {
@@ -58,6 +80,13 @@ project.afterEvaluate {
                     organization {
                         name = theOrganizationName
                         url = theOrganizationUrl
+                    }
+                    developers {
+                        developer {
+                            name = theTeamName
+                            organization = theOrganizationName
+                            organizationUrl = theOrganizationUrl
+                        }
                     }
                     scm {
                         connection = theScmConnection
@@ -105,14 +134,27 @@ project.afterEvaluate {
                 }
             }
         }
+
+        repositories {
+            maven {
+                name = "sonatype"
+                url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                credentials {
+                    username ossrhUsername
+                    password ossrhPassword
+                }
+            }
+        }
     }
 
+    // This is Spin's code (Next 3 lines), make sure you include this always you update Adyen
+    // library
     artifactoryPublish {
-        publications(publishing.publications.bintrayMavenPublication)
+        publications(publishing.publications.release)
     }
 }
 
-
+// This is Spin's code, make sure you include this always you update Adyen library
 artifactory {
     contextUrl = 'https://spin.jfrog.io/artifactory'
     publish {
@@ -130,52 +172,3 @@ artifactory {
         }
     }
 }
-
-bintray {
-    user = System.env.BINTRAY_USER
-    key = System.env.BINTRAY_KEY
-
-    publications = ["bintrayMavenPublication"]
-
-    dryRun = false
-    publish = false
-    override = true
-
-    pkg {
-        repo = "adyen-checkout-v3"
-        name = theArtifactId
-
-        websiteUrl = "https://github.com/Adyen/adyen-android"
-        issueTrackerUrl = "https://github.com/adyen-android/issues"
-        vcsUrl = "https://github.com/Adyen/adyen-android.git"
-        licenses = ["MIT"]
-
-        version {
-            name = theVersion
-            released = new Date()
-            vcsTag = theVersion
-
-            gpg {
-                sign = true
-                passphrase = System.env.BINTRAY_GPG_PASSPHRASE
-            }
-        }
-    }
-}
-
-task publishAndUploadToBintray {
-    doLast {
-        def req = ['curl', '-s -X', 'POST',
-                   "-u${System.env.BINTRAY_USER}:${System.env.BINTRAY_KEY}",
-                   "${System.env.BINTRAY_API}/${theArtifactId}/${theVersion}/publish"].execute()
-        def response = req.text
-        if (response) {
-            def json = new JsonSlurper().parseText(response)
-            println "${json.files} files from ${theArtifactId} module have been published"
-        } else {
-            throw new GradleException("Publishing ${theArtifactId} failed")
-        }
-    }
-}
-
-publishAndUploadToBintray.dependsOn "bintrayUpload"

@@ -6,19 +6,30 @@
     <!-- We update dependecies as necessary. Just keep the warning as a reminder -->
     <issue id="GradleDependency" severity="warning"/>
 
+    <!-- We update dependecies as necessary. Just keep the warning as a reminder -->
+    <issue id="NewerVersionAvailable" severity="warning"/>
+
     <!-- We don't use App Indexing -->
     <issue id="GoogleAppIndexingApiWarning" severity="ignore"/>
 
-    <!-- We are keeping an old version of Google Wallet until we update to Android X support libs -->
-    <issue id="GradleCompatible" severity="warning"/>
+    <!-- SyntheticAccessor is a minor optimization we don't want to manually do. -->
+    <issue id="SyntheticAccessor" severity="ignore"/>
 
     <!-- Google Pay UI elements were imported from google, only file renames for clarity -->
     <issue id="UnusedAttribute" >
         <ignore regexp=".*src\/main\/res\/.*googlepay.*"/>
     </issue>
-    <issue id="ContentDescription" >
+
+    <issue id="UnusedAttribute" >
         <ignore regexp=".*src\/main\/res\/.*googlepay.*"/>
     </issue>
+
+    <!-- False positive because of ViewBinding -->
+    <issue id="UnusedIds" >
+        <ignore path="src/main/res/layout/activity_main.xml"/>
+        <ignore path="src/main/res/layout/activity_result.xml"/>
+    </issue>
+
     <issue id="NegativeMargin">
         <ignore path="src/main/res/values/styles.xml"/>
     </issue>

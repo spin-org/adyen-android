@@ -8,26 +8,27 @@
 
 package com.adyen.checkout.dropin.ui.component
 
-import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
-import android.support.design.widget.BottomSheetBehavior
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.adyen.checkout.base.PaymentComponentState
-import com.adyen.checkout.base.model.payments.request.PaymentMethodDetails
-import com.adyen.checkout.base.util.CurrencyUtils
-import com.adyen.checkout.base.util.PaymentMethodTypes
+import androidx.core.view.isVisible
 import com.adyen.checkout.card.CardComponent
+import com.adyen.checkout.card.CardComponentState
+import com.adyen.checkout.card.CardListAdapter
+import com.adyen.checkout.card.data.CardType
+import com.adyen.checkout.components.PaymentComponentState
+import com.adyen.checkout.components.api.ImageLoader
+import com.adyen.checkout.components.model.payments.request.PaymentMethodDetails
+import com.adyen.checkout.components.util.CurrencyUtils
+import com.adyen.checkout.components.util.PaymentMethodTypes
 import com.adyen.checkout.core.exception.CheckoutException
 import com.adyen.checkout.core.log.LogUtil
 import com.adyen.checkout.core.log.Logger
 import com.adyen.checkout.dropin.R
-import com.adyen.checkout.dropin.ui.DropInViewModel
+import com.adyen.checkout.dropin.databinding.FragmentCardComponentBinding
 import com.adyen.checkout.dropin.ui.base.BaseComponentDialogFragment
-import kotlinx.android.synthetic.main.fragment_card_component.dropInCardView
-import kotlinx.android.synthetic.main.view_card_component_dropin.view.header
-import kotlinx.android.synthetic.main.view_card_component_dropin.view.payButton
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class CardComponentDialogFragment : BaseComponentDialogFragment() {
 
@@ -35,8 +36,22 @@ class CardComponentDialogFragment : BaseComponentDialogFragment() {
         private val TAG = LogUtil.getTag()
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_card_component, container, false)
+    private lateinit var binding: FragmentCardComponentBinding
+    private lateinit var cardListAdapter: CardListAdapter
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        binding = FragmentCardComponentBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun setPaymentPendingInitialization(pending: Boolean) {
+        binding.payButton.isVisible = !pending
+        if (pending) binding.progressBar.show()
+        else binding.progressBar.hide()
+    }
+
+    override fun highlightValidationErrors() {
+        binding.cardView.highlightValidationErrors()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,38 +70,49 @@ class CardComponentDialogFragment : BaseComponentDialogFragment() {
 
         if (!dropInConfiguration.amount.isEmpty) {
             val value = CurrencyUtils.formatAmount(dropInConfiguration.amount, dropInConfiguration.shopperLocale)
-            dropInCardView.payButton.text = String.format(resources.getString(R.string.pay_button_with_value), value)
+            binding.payButton.text = String.format(resources.getString(R.string.pay_button_with_value), value)
         }
 
         // Keeping generic component to use the observer from the BaseComponentDialogFragment
-        component.observe(this, this)
-        cardComponent.observeErrors(this, createErrorHandlerObserver())
+        component.observe(viewLifecycleOwner, this)
+        cardComponent.observeErrors(viewLifecycleOwner, createErrorHandlerObserver())
 
         // try to get the name from the payment methods response
-        activity?.let { activity ->
-            val dropInViewModel = ViewModelProviders.of(activity).get(DropInViewModel::class.java)
-            dropInCardView.header.text = dropInViewModel.paymentMethodsApiResponse.paymentMethods?.find { it.type == PaymentMethodTypes.SCHEME }?.name
-        }
+        binding.header.text =
+            dropInViewModel.paymentMethodsApiResponse.paymentMethods?.find { it.type == PaymentMethodTypes.SCHEME }?.name
 
-        dropInCardView.attach(cardComponent, this)
+        binding.cardView.attach(cardComponent, viewLifecycleOwner)
 
-        if (dropInCardView.isConfirmationRequired) {
-            dropInCardView.payButton.setOnClickListener {
-                if (cardComponent.state?.isValid == true) {
-                    startPayment()
-                } else {
-                    dropInCardView.highlightValidationErrors()
-                }
-            }
-
+        if (binding.cardView.isConfirmationRequired) {
+            binding.payButton.setOnClickListener { componentDialogViewModel.payButtonClicked() }
             setInitViewState(BottomSheetBehavior.STATE_EXPANDED)
-            dropInCardView.requestFocus()
+            binding.cardView.requestFocus()
         } else {
-            dropInCardView.payButton.visibility = View.GONE
+            binding.payButton.visibility = View.GONE
         }
+
+        val supportedCards = if (cardComponent.isStoredPaymentMethod()) {
+            emptyList<CardType>()
+        } else {
+            cardComponent.configuration.supportedCardTypes
+        }
+        cardListAdapter = CardListAdapter(
+            ImageLoader.getInstance(requireContext(), component.configuration.environment),
+            supportedCards
+        )
+        binding.recyclerViewCardList.adapter = cardListAdapter
     }
 
     override fun onChanged(paymentComponentState: PaymentComponentState<in PaymentMethodDetails>?) {
-        // nothing, validation is already checked on focus change and button click
+        val cardComponent = component as CardComponent
+        val cardComponentState = paymentComponentState as? CardComponentState
+        if (cardComponentState?.cardType != null && !cardComponent.isStoredPaymentMethod()) {
+            // TODO: 11/01/2021 pass list of cards from Bin Lookup
+            cardListAdapter.setFilteredCard(listOf(cardComponentState.cardType))
+        } else {
+            cardListAdapter.setFilteredCard(emptyList())
+        }
+
+        componentDialogViewModel.componentStateChanged(component.state)
     }
 }

@@ -13,6 +13,45 @@
 [//]: <> (Add changes that not released yet into `Unreleased` section)
 [//]: <> (Comment `Unreleased` section if there are no changes)
 [//]: <> (## [Unreleased])
+## 4.0.0 an above
+- Starting with 4.0.0 all changes will be on the release notes on GitHub.
+
+## [3.7.1] - 2020-10-15
+### Added
+- Translations for MB Way and Await Components
+- GitHub Actions workflows to run CI and Publish releases.
+
+## [3.7.0] - 2020-09-10
+### Added
+- MB Way Component.
+- Await Action Component.
+- Client Key to Configuration objects.
+### Changed
+- DropInService JobId is now public.
+- Refactor internal structure to create ViewableComponent interface.
+- Action Components now have a Configuration object, optional in most cases.
+- Block Voucher payment methods that are not yet supported.
+### Fixed
+- Improved validation for Public Key.
+- Date parsing to be non lenient.
+
+## [3.6.6] - 2020-05-05
+### Added
+- Common issues session on Readme.
+### Changed
+- New Action type `sdk` replaces `wechatpaySDK`
+### Fixed
+- `WeChatPayComponent` automatically triggers observer as expected.
+
+## [3.6.5] - 2020-04-30
+### Changed
+- Update 3DS2 SDK to version `2.1.0-rc08`
+- Added `FLAG_SECURE` to window when `CardView` is present.
+- Card Data validation now accepts up to 30 years in the future.
+### Fixed
+- Fix and use `LocaleUtil.fromLanguageTag()` to parse user locale for localization. 
+- Fix typo in CUP regex validation.
+
 ## [3.6.4] - 2020-02-21
 ### Changed
 - Update 3DS2 SDK to version `2.1.0-rc07`

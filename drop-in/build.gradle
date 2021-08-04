@@ -6,14 +6,17 @@
  * Created by caiof on 8/2/2019.
  */
 
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+}
+
 // Maven artifact
 ext.mavenArtifactId = "spin-drop-in"
 ext.mavenArtifactName = "Adyen checkout drop-in component"
 ext.mavenArtifactDescription = "Adyen checkout drop-in component client for Adyen's Checkout API."
 
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
+apply from: "${rootDir}/config/gradle/sharedTasks.gradle"
 
 android {
     compileSdkVersion compile_sdk_version
@@ -24,42 +27,58 @@ android {
         versionCode version_code
         versionName version_name
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        consumerProguardFiles "consumer-rules.pro"
 
         // Get scheme for redirect result
         manifestPlaceholders = ["checkoutRedirectScheme": rootProject.ext.checkoutRedirectScheme]
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
 }
 
 dependencies {
     //Tests
     testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "com.android.support.test:runner:$support_test_runner_version"
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation "androidx.test.ext:junit:$test_ext_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
 
     // Checkout
-    api project(":afterpay-ui")
-    api project(":ideal-ui")
-    api project(":molpay-ui")
-    api project(":dotpay-ui")
-    api project(":entercash-ui")
-    api project(":eps-ui")
-    api project(":openbanking-ui")
-    api project(":card-ui")
-    api project(":redirect")
     api project(":3ds2")
-    api project(":googlepay-base")
-    api project(":sepa-ui")
-    api project(":bcmc-ui")
-    api project(":wechatpay-base")
+    api project(":await")
+    api project(':bcmc')
+    api project(':blik')
+    api project(":card")
+    api project(':dotpay')
+    api project(':entercash')
+    api project(':eps')
+    api project(':googlepay')
+    api project(':ideal')
+    api project(':mbway')
+    api project(':molpay')
+    api project(':qr-code')
+    api project(':openbanking')
+    api project(":redirect")
+    api project(':sepa')
+    api project(':wechatpay')
 
     // Dependencies
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "com.android.support:recyclerview-v7:$support_library_version"
-    implementation "com.android.support:design:$support_library_version"
-}
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_stdlib_version"
+    implementation "androidx.recyclerview:recyclerview:$recyclerview_version"
+    implementation "com.google.android.material:material:$material_version"
+    // contains kotlinx.coroutines
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.2.0'
 
-// This sharedTasks.gradle script is applied at the end of this build.gradle script,
-// since javadocs.gradle script is dependent on android.compileSdkVersion property,
-// which is set on the android block above.
-apply from: "../config/gradle/sharedTasks.gradle"
+}

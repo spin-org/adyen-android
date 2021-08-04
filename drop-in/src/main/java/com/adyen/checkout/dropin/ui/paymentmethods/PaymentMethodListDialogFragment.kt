@@ -8,105 +8,128 @@
 
 package com.adyen.checkout.dropin.ui.paymentmethods
 
-import android.arch.lifecycle.Observer
-import android.arch.lifecycle.ViewModelProviders
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.adyen.checkout.base.api.ImageLoader
-import com.adyen.checkout.base.model.paymentmethods.PaymentMethod
-import com.adyen.checkout.base.model.payments.request.GenericPaymentMethod
-import com.adyen.checkout.base.model.payments.request.PaymentComponentData
-import com.adyen.checkout.base.model.payments.request.PaymentMethodDetails
-import com.adyen.checkout.base.util.PaymentMethodTypes
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.adyen.checkout.components.GenericComponentState
+import com.adyen.checkout.components.api.ImageLoader
+import com.adyen.checkout.components.model.payments.request.GenericPaymentMethod
+import com.adyen.checkout.components.model.payments.request.PaymentComponentData
+import com.adyen.checkout.components.model.payments.request.PaymentMethodDetails
+import com.adyen.checkout.components.util.PaymentMethodTypes
 import com.adyen.checkout.core.exception.CheckoutException
+import com.adyen.checkout.core.exception.ComponentException
 import com.adyen.checkout.core.log.LogUtil
 import com.adyen.checkout.core.log.Logger
 import com.adyen.checkout.dropin.R
-import com.adyen.checkout.dropin.ui.DropInViewModel
 import com.adyen.checkout.dropin.ui.base.DropInBottomSheetDialogFragment
+import com.adyen.checkout.dropin.ui.getViewModel
+
+private val TAG = LogUtil.getTag()
 
 class PaymentMethodListDialogFragment : DropInBottomSheetDialogFragment(), PaymentMethodAdapter.OnPaymentMethodSelectedCallback {
 
-    companion object {
-        private val TAG = LogUtil.getTag()
-        private const val SHOW_IN_EXPAND_STATUS = "SHOW_IN_EXPAND_STATUS"
-
-        fun newInstance(showInExpandStatus: Boolean): PaymentMethodListDialogFragment {
-            val args = Bundle()
-            args.putBoolean(SHOW_IN_EXPAND_STATUS, showInExpandStatus)
-
-            val componentDialogFragment = PaymentMethodListDialogFragment()
-            componentDialogFragment.arguments = args
-
-            return componentDialogFragment
-        }
-    }
-
-    private lateinit var mPaymentMethodModelList: PaymentMethodsModel
-    private lateinit var mDropInViewModel: DropInViewModel
+    private lateinit var paymentMethodsListViewModel: PaymentMethodsListViewModel
     private lateinit var paymentMethodAdapter: PaymentMethodAdapter
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        Logger.d(TAG, "onAttach")
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         Logger.d(TAG, "onCreateView")
-        mDropInViewModel = ViewModelProviders.of(requireActivity()).get(DropInViewModel::class.java)
+        paymentMethodsListViewModel = getViewModel {
+            PaymentMethodsListViewModel(
+                requireActivity().application,
+                dropInViewModel.paymentMethodsApiResponse.paymentMethods.orEmpty(),
+                dropInViewModel.paymentMethodsApiResponse.storedPaymentMethods.orEmpty(),
+                dropInViewModel.dropInConfiguration
+            )
+        }
         val view = inflater.inflate(R.layout.fragment_payment_methods_list, container, false)
         addObserver(view.findViewById(R.id.recyclerView_paymentMethods))
         return view
     }
 
     private fun addObserver(recyclerView: RecyclerView) {
-        mDropInViewModel.paymentMethodsModelLiveData.observe(this, Observer<PaymentMethodsModel> {
-            Logger.d(TAG, "paymentMethods changed")
-            if (it == null) {
-                throw CheckoutException("List of PaymentMethodModel is null.")
-            }
+        paymentMethodsListViewModel.paymentMethodsLiveData.observe(
+            viewLifecycleOwner,
+            {
+                Logger.d(TAG, "paymentMethods changed")
+                if (it == null) {
+                    throw CheckoutException("List of PaymentMethodModel is null.")
+                }
 
-            // we only expect payment methods to be updated inside the same list, without adding or removing elements
-            if (!::mPaymentMethodModelList.isInitialized) {
-                mPaymentMethodModelList = it
-                paymentMethodAdapter = PaymentMethodAdapter(mPaymentMethodModelList,
-                        ImageLoader.getInstance(requireContext(), mDropInViewModel.dropInConfiguration.environment),
-                        arguments?.getBoolean(SHOW_IN_EXPAND_STATUS)!!,
-                        this)
+                // We expect the list of payment methods to be updated only once, so we just set the adapter
+                paymentMethodAdapter = PaymentMethodAdapter(
+                    it,
+                    ImageLoader.getInstance(
+                        requireContext(),
+                        dropInViewModel.dropInConfiguration.environment
+                    ),
+                    this
+                )
                 recyclerView.layoutManager = LinearLayoutManager(requireContext())
                 recyclerView.adapter = paymentMethodAdapter
-            } else {
-                paymentMethodAdapter.updatePaymentMethodsList(it)
-                paymentMethodAdapter.notifyDataSetChanged()
             }
-        })
+        )
     }
 
-    override fun onCancel(dialog: DialogInterface?) {
+    override fun onCancel(dialog: DialogInterface) {
         super.onCancel(dialog)
         Logger.d(TAG, "onCancel")
         protocol.terminateDropIn()
     }
 
-    override fun onPaymentMethodSelected(paymentMethod: PaymentMethod, isInExpandMode: Boolean) {
+    override fun onBackPressed(): Boolean {
+        if (dropInViewModel.showPreselectedStored) {
+            protocol.showPreselectedDialog()
+        } else {
+            protocol.terminateDropIn()
+        }
+        return true
+    }
+
+    override fun onStoredPaymentMethodSelected(storedPaymentMethodModel: StoredPaymentMethodModel) {
+        Logger.d(TAG, "onStoredPaymentMethodSelected")
+        val storedPaymentMethod = dropInViewModel.getStoredPaymentMethod(storedPaymentMethodModel.id)
+        // TODO: 10/12/2020 remove this after we have UI for stored Blik component
+        if (storedPaymentMethod.type == PaymentMethodTypes.BLIK) {
+            Logger.e(TAG, "Stored Blik is not yet supported in this flow.")
+            throw ComponentException("Stored Blik is not yet supported in this flow.")
+        }
+        protocol.showStoredComponentDialog(storedPaymentMethod, false)
+    }
+
+    override fun onPaymentMethodSelected(paymentMethod: PaymentMethodModel) {
         Logger.d(TAG, "onPaymentMethodSelected - ${paymentMethod.type}")
-        paymentMethod.type?.let { paymentMethodType ->
-            // Check some specific payment methods that don't need to show a view
-            when (paymentMethodType) {
-                PaymentMethodTypes.GOOGLE_PAY -> {
-                    protocol.startGooglePay(
-                            paymentMethod, mDropInViewModel.dropInConfiguration.getConfigurationFor(PaymentMethodTypes.GOOGLE_PAY, requireContext()))
-                }
-                PaymentMethodTypes.WECHAT_PAY_SDK -> {
-                    sendPayment(paymentMethodType)
-                }
-                else -> {
-                    if (PaymentMethodTypes.SUPPORTED_PAYMENT_METHODS.contains(paymentMethodType)) {
-                        protocol.showComponentDialog(paymentMethod, isInExpandMode)
-                    } else {
-                        sendPayment(paymentMethodType)
-                    }
-                }
+
+        // Check some specific payment methods that don't need to show a view
+        when {
+            paymentMethod.type == PaymentMethodTypes.GOOGLE_PAY -> {
+                Logger.d(TAG, "onPaymentMethodSelected: starting Google Pay")
+                protocol.startGooglePay(
+                    dropInViewModel.getPaymentMethod(paymentMethod.type),
+                    dropInViewModel.dropInConfiguration.getConfigurationForPaymentMethod(PaymentMethodTypes.GOOGLE_PAY, requireContext())
+                )
+            }
+            PaymentMethodTypes.SUPPORTED_ACTION_ONLY_PAYMENT_METHODS.contains(paymentMethod.type) -> {
+                Logger.d(TAG, "onPaymentMethodSelected: payment method does not need a component, sending payment")
+                sendPayment(paymentMethod.type)
+            }
+            PaymentMethodTypes.SUPPORTED_PAYMENT_METHODS.contains(paymentMethod.type) -> {
+                Logger.d(TAG, "onPaymentMethodSelected: payment method is supported")
+                protocol.showComponentDialog(dropInViewModel.getPaymentMethod(paymentMethod.type))
+            }
+            else -> {
+                Logger.d(TAG, "onPaymentMethodSelected: unidentified payment method, sending payment in case of redirect")
+                sendPayment(paymentMethod.type)
             }
         }
     }
@@ -114,6 +137,7 @@ class PaymentMethodListDialogFragment : DropInBottomSheetDialogFragment(), Payme
     private fun sendPayment(type: String) {
         val paymentComponentData = PaymentComponentData<PaymentMethodDetails>()
         paymentComponentData.paymentMethod = GenericPaymentMethod(type)
-        protocol.requestPaymentsCall(paymentComponentData)
+        val paymentComponentState = GenericComponentState(paymentComponentData, true, true)
+        protocol.requestPaymentsCall(paymentComponentState)
     }
 }
