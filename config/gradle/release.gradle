@@ -147,10 +147,6 @@ project.afterEvaluate {
         }
     }
 
-    signing {
-        sign publishing.publications
-    }
-
     // This is Spin's code (Next 3 lines), make sure you include this always you update Adyen
     // library
     artifactoryPublish {
