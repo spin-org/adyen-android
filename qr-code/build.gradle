@@ -45,15 +45,16 @@ android {
 }
 
 dependencies {
+    // Checkout
+    api project(':components-core')
+    api project(':ui-core')
+    api project(':redirect')
+
+    // Dependencies
+    implementation "com.google.android.material:material:$material_version"
+
     //Tests
     testImplementation "junit:junit:$junit_version"
     androidTestImplementation "androidx.test.ext:junit:$test_ext_version"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
-
-    // Checkout
-    api project(':components-core')
-    api project(':ui-core')
-
-    // Dependencies
-    implementation "com.google.android.material:material:$material_version"
 }
