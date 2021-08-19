@@ -171,12 +171,6 @@ artifactory {
             publishPom = true // Publish generated POM files to Artifactory (true by default)
         }
     }
-
-    // This is Spin's code (Next 3 lines), make sure you include this always you update Adyen
-    // library
-    artifactoryPublish {
-        publications(publishing.publications.release)
-    }
 }
 
 // This is Spin's code, make sure you include this always you update Adyen library
