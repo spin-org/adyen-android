@@ -110,10 +110,10 @@ class NewCardDelegate(
     }
 
     override fun validatePostalCode(postalCode: String): FieldState<String> {
-        val validation = if (postalCode.isNotEmpty()) {
-            Validation.Valid
-        } else {
+        val validation = if (isPostalCodeRequired() && postalCode.isEmpty()) {
             Validation.Invalid(R.string.checkout_card_postal_not_valid)
+        } else {
+            Validation.Valid
         }
         return FieldState(postalCode, validation)
     }
