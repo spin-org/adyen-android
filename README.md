@@ -29,11 +29,11 @@ If you are upgrading from 3.x.x to a current release, check out our [migration g
 Import the Component module for the Payment Method you want to use by adding it to your `build.gradle` file.
 For example, for the Drop-in solution you should add:
 ```groovy
-implementation "com.adyen.checkout:drop-in:4.4.0"
+implementation "com.adyen.checkout:drop-in:4.5.0"
 ```
 For a Credit Card component you should add:
 ```groovy
-implementation "com.adyen.checkout:card:4.4.0"
+implementation "com.adyen.checkout:card:4.5.0"
 ```
 
 ### Client Key
@@ -210,3 +210,12 @@ This repository is open source and available under the MIT license. For more inf
 [docs.cardConfiguration]: https://docs.adyen.com/online-payments/android/components#step-1-set-up-components
 [client.key]: https://docs.adyen.com/online-payments/android/drop-in#client-key
 [migration.guide]: https://docs.adyen.com/online-payments/android/migrate-to-android-4-0-0
+
+# Publish artifactory to JFrog
+```
+ ./gradlew clean :drop-in:artifactoryPublish -Pcurrent_version='<VERSION>' -Partifactory_user='<USER>' -Partifactory_password='<PASSWORD>'
+```
+
+_NOTE:_ Use single quotes for parameters.
+
+Check the new version at https://spin.jfrog.io/artifactory/default-maven-local/com/adyen/checkout/spin-drop-in
