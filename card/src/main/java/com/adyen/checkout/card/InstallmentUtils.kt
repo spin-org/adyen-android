@@ -14,7 +14,7 @@ import com.adyen.checkout.components.model.payments.request.Installments
 
 private const val REVOLVING_INSTALLMENT_VALUE = 1
 
-internal object InstallmentUtils {
+object InstallmentUtils {
 
     /**
      * Create a list of installment options from [InstallmentConfiguration].
